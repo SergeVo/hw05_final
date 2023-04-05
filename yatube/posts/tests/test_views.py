@@ -1,7 +1,11 @@
+import shutil
+import tempfile
+
 from django import forms
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.conf import settings
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -9,7 +13,10 @@ from ..models import Group, Post
 
 User = get_user_model()
 
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostsPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -45,6 +52,11 @@ class PostsPagesTests(TestCase):
             group=cls.group,
             image=cls.uploaded
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
         self.guest_client = Client()
@@ -85,6 +97,8 @@ class PostsPagesTests(TestCase):
             reverse('posts:group_list', kwargs={'slug': self.group.slug}))
         expected = list(Post.objects.filter(group=self.group.pk))
         self.assertEqual(list(response.context.get('page_obj')), expected)
+        post_image = Post.objects.first().image
+        self.assertEqual(post_image.url, '/media/posts/small.gif')
 
     def test_profile_show_correct_context(self):
         """Проверка контекста posts:profile"""
@@ -92,6 +106,8 @@ class PostsPagesTests(TestCase):
             reverse('posts:profile', kwargs={'username': self.author}))
         expected = list(Post.objects.filter(author=self.author))
         self.assertEqual(list(response.context.get('page_obj')), expected)
+        post_image = Post.objects.first().image
+        self.assertEqual(post_image.url, '/media/posts/small.gif')
 
     def test_post_detail_show_correct_context(self):
         """Проверка контекста posts:post_detail"""
@@ -99,6 +115,8 @@ class PostsPagesTests(TestCase):
             reverse('posts:post_detail', kwargs={'post_id': self.post.pk}))
         post_odj = response.context.get('post')
         self.assertEqual(post_odj, self.post)
+        post_image = self.post.image
+        self.assertEqual(post_image.url, '/media/posts/small.gif')
 
     form_fields = {
         'text': forms.fields.CharField,
