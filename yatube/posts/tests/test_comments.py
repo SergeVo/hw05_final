@@ -36,7 +36,7 @@ class CommentTests(TestCase):
         """
         Неавторизированный пользователь не может комментировать
         и перенаправляется на страницу логина.
-            
+
         """
         text_comment = {
             'text': 'Тестовый комментарий',
@@ -48,4 +48,3 @@ class CommentTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(
             response, f'/auth/login/?next=/posts/{self.post.pk}/comment/')
-        

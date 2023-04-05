@@ -26,10 +26,24 @@ class PostsPagesTests(TestCase):
             slug='test_slug_2',
             description='Второе описание для теста',
         )
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        cls.uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
         cls.post = Post.objects.create(
             author=cls.author,
             text='Тестовый текст',
-            group=cls.group
+            group=cls.group,
+            image=cls.uploaded
         )
 
     def setUp(self):
@@ -63,6 +77,7 @@ class PostsPagesTests(TestCase):
         self.assertEqual(first_object.author.username, self.author.username)
         self.assertEqual(first_object.text, self.post.text)
         self.assertEqual(first_object.group.title, self.group.title)
+        self.assertEqual(first_object.image.path, self.post.image.path)
 
     def test_group_list_show_correct_context(self):
         """Проверка контекста posts:group_list"""
@@ -88,6 +103,7 @@ class PostsPagesTests(TestCase):
     form_fields = {
         'text': forms.fields.CharField,
         'group': forms.fields.ChoiceField,
+        "image": forms.fields.ImageField,
     }
 
     def test_edit_post_show_correct_context(self):
@@ -110,7 +126,7 @@ class PostsPagesTests(TestCase):
                 self.assertIsInstance(field, expected)
 
     def test_post_created_not_show_group_profile(self):
-        """Проверка наличия постов непредназначенной для них группе"""
+        """Проверка наличия постов в непредназначенной для них группе"""
         urls = (
             reverse('posts:group_list', kwargs={'slug':
                                                 self.groupSecond.slug}),

@@ -33,8 +33,8 @@ def group_posts(request, slug):
 def profile(request, username):
     template = 'posts/profile.html'
     author = get_object_or_404(User, username=username)
-    following= (request.user.is_authenticated
-                and author.following.filter(user=request.user,))
+    following = (request.user.is_authenticated
+                 and author.following.filter(user=request.user,))
     post_list = author.posts.all()
     title = f'Профайл пользователя {author.username}'
     page_obj = show_paginator(request, post_list)
@@ -110,6 +110,7 @@ def add_comment(request, post_id):
         comment.post = post
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
+
 
 @login_required
 def follow_index(request):
