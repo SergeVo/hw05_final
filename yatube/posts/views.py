@@ -10,10 +10,8 @@ from .utils import show_paginator
 
 @cache_page(20, key_prefix='index_page')
 def index(request):
-    post_list = Post.objects.all()
-    page_obj = show_paginator(request, post_list)
     context = {
-        'page_obj': page_obj,
+        'page_obj': show_paginator(request, Post.objects.all()),
     }
     return render(request, 'posts/index.html', context)
 
@@ -21,46 +19,38 @@ def index(request):
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
     posts = group.posts.all()
-    page_obj = show_paginator(request, posts)
     context = {
         'group': group,
         'posts': posts,
-        'page_obj': page_obj,
+        'page_obj': show_paginator(request, posts),
     }
     return render(request, 'posts/group_list.html', context)
 
 
 def profile(request, username):
-    template = 'posts/profile.html'
     author = get_object_or_404(User, username=username)
-    following = (request.user.is_authenticated
-                 and author.following.filter(user=request.user,))
     post_list = author.posts.all()
-    title = f'Профайл пользователя {author.username}'
-    page_obj = show_paginator(request, post_list)
     context = {
         'author': author,
-        'following': following,
-        'title': title,
+        'following': (request.user.is_authenticated
+                      and author.following.filter(user=request.user)),
         'total_posts': post_list.count(),
-        'page_obj': page_obj,
+        'page_obj': show_paginator(request, post_list),
     }
-    return render(request, template, context)
+    return render(request, 'posts/profile.html', context)
 
 
 def post_detail(request, post_id):
-    template = 'posts/post_detail.html'
     post = get_object_or_404(Post, pk=post_id)
-    post_number = post.author.posts.count()
     comments = post.comments.all()
     form = CommentForm(request.POST or None)
     context = {
         'post': post,
-        'post_number': post_number,
+        'post_number': post.author.posts.count(),
         'comments': comments,
         'form': form,
     }
-    return render(request, template, context)
+    return render(request, 'posts/post_detail.html', context)
 
 
 @login_required
@@ -91,10 +81,9 @@ def post_edit(request, post_id):
     if form.is_valid():
         post = form.save()
         return redirect('posts:post_detail', post_id)
-    is_edit = True
     context = {
         'form': form,
-        'is_edit': is_edit,
+        'is_edit': True,
         'post_id': post_id,
     }
     return render(request, 'posts/create_post.html', context)
