@@ -10,7 +10,7 @@ class FollowTests(TestCase):
         self.client_auth_following = Client()
         self.user_follower = User.objects.create(username='follower')
         self.user_following = User.objects.create(username='following')
-        self.post = Post.objects.create( 
+        self.post = Post.objects.create(
             author=self.user_following,
             text='Тестовая запись для тестирования ленты'
         )
